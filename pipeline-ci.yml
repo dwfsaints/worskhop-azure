@@ -37,3 +37,15 @@ steps:
       customCommand: 'run deploy -- -r "https://x-access-token:$(GITHUB_TOKEN)@github.com/$(currentRepository).git" -e ci/$(prNumber)'
     displayName: "Deploy Angular App"
     condition: succeeded()
+
+  - task: CmdLine@2
+    inputs:
+      script: |
+        curl \
+        -X POST \
+        "https://api.github.com/repos/$(currentRepository)/issues/$(prNumber)/comments" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: token $(GITHUB_TOKEN)" \
+        --data '{ "body": "[Angular App](https://dwfsaints.github.io/worskhop-azure/ci/$(prNumber))" }'
+    displayName: 'Comment link on PR'
+    condition: succeeded() 
