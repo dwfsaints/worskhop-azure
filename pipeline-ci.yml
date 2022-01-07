@@ -14,4 +14,4 @@ steps:
     inputs:
       command: "custom"
       customCommand: 'run build'
-    displayName: "Build Angular"
+    displayName: "Build Angular App"
