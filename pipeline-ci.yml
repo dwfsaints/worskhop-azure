@@ -4,19 +4,34 @@ trigger:
 pool: 
   vmImage: 'ubuntu-latest'
 
+variables:
+  - group: Workshop
+  - name: currentRepository
+    value: $(Build.Repository.Name)
 
 steps: 
+  - script: |
+      git config --local user.name "Azure Pipelines"
+      git config --local user.email "azuredevops@microsoft.com"
+    displayName: 'Git credentials' 
   - task: Npm@1
     inputs:
       command: "install"
     displayName: "Installing dependencies"
+  # - task: Npm@1
+  #   inputs:
+  #     command: "custom"
+  #     customCommand: 'run test'
+  #   displayName: "Testing App"
   - task: Npm@1
     inputs:
       command: "custom"
-      customCommand: 'run test'
-    displayName: "Testing App"
-  - task: Npm@1
-    inputs:
-      command: "custom"
-      customCommand: 'run build'
+      customCommand: 'run build -- --base-href="https://dwfsaints.github.io/worskhop-azure/app"'
     displayName: "Build Angular App"
+
+  - task: Npm@1
+    inputs:
+      command: "custom"
+      customCommand: 'run deploy -- -r "https://x-access-token:$(GITHUB_TOKEN)@github.com/$(currentRepository).git"'
+    displayName: "Deploy Angular App"
+    condition: succeeded()
