@@ -8,6 +8,8 @@ variables:
   - group: Workshop
   - name: currentRepository
     value: $(Build.Repository.Name)
+  - name: prNumber
+    value: $(System.PullRequest.PullRequestNumber) 
 
 steps: 
   - script: |
@@ -26,12 +28,12 @@ steps:
   - task: Npm@1
     inputs:
       command: "custom"
-      customCommand: 'run build -- --base-href="https://dwfsaints.github.io/worskhop-azure/app"'
+      customCommand: 'run build -- --base-href "https://dwfsaints.github.io/worskhop-azure/ci/$(prNumber)/app"'
     displayName: "Build Angular App"
-
+  
   - task: Npm@1
     inputs:
       command: "custom"
-      customCommand: 'run deploy -- -r "https://x-access-token:$(GITHUB_TOKEN)@github.com/$(currentRepository).git"'
+      customCommand: 'run deploy -- -r "https://x-access-token:$(GITHUB_TOKEN)@github.com/$(currentRepository).git" -e ci/$(prNumber)'
     displayName: "Deploy Angular App"
     condition: succeeded()
