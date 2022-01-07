@@ -1,0 +1,54 @@
+trigger: 
+  - none
+
+pool: 
+  vmImage: 'ubuntu-latest'
+
+parameters:
+  - name: releaseNumber
+    type: string
+    displayName: The version to be released
+
+variables:
+  - group: Workshop
+  - name: currentRepository
+    value: $(Build.Repository.Name)
+
+steps: 
+  - script: |
+      git config --local user.name "Azure Pipelines"
+      git config --local user.email "azuredevops@microsoft.com"
+    displayName: 'Git credentials' 
+  - task: Npm@1
+    inputs:
+      command: "install"
+    displayName: "Installing dependencies"
+  # - task: Npm@1
+  #   inputs:
+  #     command: "custom"
+  #     customCommand: 'run test'
+  #   displayName: "Testing App"
+  - task: Npm@1
+    inputs:
+      command: "custom"
+      customCommand: 'run build -- --base-href "https://dwfsaints.github.io/worskhop-azure/releases/${{ parameters.releaseNumber }}/app"'
+    displayName: "Build Angular App"
+  
+  - task: Npm@1
+    inputs:
+      command: "custom"
+      customCommand: 'run deploy -- -r "https://x-access-token:$(GITHUB_TOKEN)@github.com/$(currentRepository).git" -e releases/${{ parameters.releaseNumber }}'
+    displayName: "Deploy Angular App"
+    condition: succeeded()
+  
+  - task: CmdLine@2
+    inputs:
+      script: |
+        curl \
+        -X POST \
+        "https://api.github.com/repos/$(currentRepository)/releases" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: token $(GITHUB_TOKEN)" \
+        --data '{ "tag_name": "${{ parameters.releaseNumber }}", "name": "${{ parameters.releaseNumber }}", "draft": true, "body": "[Angular App Release ${{ parameters.releaseNumber }}](https://dwfsaints.github.io/worskhop-azure/releases/${{ parameters.releaseNumber }})" }'
+    displayName: 'Create release'
+    condition: succeeded()
